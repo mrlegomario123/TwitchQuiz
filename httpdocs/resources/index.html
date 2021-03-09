@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+		<meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <script src="/resources/vendor/redom/redom.min.js"></script>
+        <script src="/resources/scripts/twitchwebsocket.js"></script>
+		<script>const { el, mount } = redom;</script>
+<script>
+
+function testInject() {	
+	const hello = el("h1", "Hello world!");
+	mount(document.body, hello);
+}
+
+//Receive message function w parameter ev (data comming in from websocket)
+//Leave receiveMessage function in html file as way in which different websites will deal w incoming msgs will differ
+function receiveMessage(ev) {
+	console.log("Received message from websocket : " + ev.data); //currently do nothing w data
+
+	// Get the data from the message received
+	mess = JSON.parse( ev.data );
+
+	// 'mess' is an object that contains whatever you want
+	// In this test, it's a JSON object with a command, payload (As an object) and an ID
+	
+	// So, if the command is 'join'
+	if( mess.command == "join") {
+		
+		// Create an element with the users name
+		const user = el("p", "User has joined the lobby : " + mess.payload.name );
+		
+		// And inject into the web page
+		mount(document.getElementById("users"), user);		
+	}
+	else if (mess.command == "question") {
+		// Create an element with the users name
+		const user = el("p", "question: " + mess.payload.question );
+		const answ1 = el("p", "optionA: " + mess.payload.optionA );
+		const answ2= el("p", "optionB: " + mess.payload.optionB );
+		const answ3 = el("p", "optionC: " + mess.payload.optionC );
+		const answ4 = el("p", "optionD: " + mess.payload.optionD );
+
+		
+		// And inject into the web page
+		mount(document.getElementById("users"), user);		
+		mount(document.getElementById("users"), answ1);		
+		mount(document.getElementById("users"), answ2);		
+		mount(document.getElementById("users"), answ3);		
+		mount(document.getElementById("users"), answ4);		
+
+
+	}
+}
+
+
+// Wait until the entire page has loaded
+window.addEventListener("load", function() {
+	
+	// Everything has loaded so lets start	
+	console.log("Starting");
+	
+	// Create a connection to the websocket
+	screate( socketOpen, socketClosed, receiveMessage);
+});
+
+// Create a twitch type message in IRC format
+function makeTwitchMessage(mess) {
+	return ":captainpovey!captainpovey@captainpovey.tmi.twitch.tv PRIVMSG #captainpovey :"+ mess;
+}
+	
+		</script>
+
+		<style>
+
+body { 
+	width : 100%;
+}
+
+table { 
+	width : 100%;
+}
+
+td,th {	
+		width : 50%;
+		text-align : left;
+}	
+
+		</style>
+
+</head>
+
+<body>
+	<h1>Twitch Quiz</h1>
+	<table>
+		<tr>
+			<th><h2>Commands</h2></th><th><h2>Users</h2></th>
+		</tr>
+		<tr>
+			<td>
+				<button onclick="sendMessage('1','start','')">start game</button>
+				<br />
+			
+				<input type="text" id="fred" size="20" /> 
+				<button onclick="sendMessage('1','fromweb',document.getElementById('fred').value)">send data</button>
+				<br />
+
+				<input type="text" id="twitch_message" size="20" /> 
+				<button onclick="sendMessage('1','fromtwitch', makeTwitchMessage(document.getElementById('twitch_message').value ) )">send twitch data</button>
+			</td>
+			
+			<td>
+				<!--  The users will be injected here ... -->
+				<div id="users">				
+				</div>
+			</td>
+		</tr>
+	
+	</table>
+</body>
+</html>
