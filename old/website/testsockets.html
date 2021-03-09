@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+		<meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+		<script>
+
+var websocket;
+//var server_uri = "192.168.0.80";
+
+// Run on the same machine
+var server_uri = "localhost";
+var myid = uuidv4();
+
+function screate(onopenfnc, onclosefnc, onreceivefnc) {
+
+	var wsUri = "ws://" + server_uri + ":9006/";
+	
+	websocket = new WebSocket(wsUri); 
+	websocket.onopen = function(evt) { onopenfnc(evt); };
+	websocket.onclose = function(evt) { onclosefnc(evt);  };
+	websocket.onmessage = function(evt) { onreceivefnc(evt); };
+	websocket.onerror = function(evt) { console.log('websocket error'); };
+
+}
+
+
+/**
+ * Send a message over web sockets
+ * 
+ * @param id        use this to identify an incoming message
+ * @param command   A command
+ * @param payload   Extra Payload in JSON
+ */
+
+function sendMessage(id, command, payload ){
+
+	//prepare json data
+	var msg = {
+		xid : myid,
+		id : id,
+		command: command,
+		payload : payload
+	};
+
+	jmsg = JSON.stringify(msg);
+	console.log("Sending message to websocket : " + jmsg);
+	websocket.send(jmsg);
+}
+
+// Receive message
+
+function receiveMessage(ev) {
+
+	var response 		= JSON.parse(ev.data);
+	console.log("Received message from websocket : " + ev.data);
+
+	// Response is an object that contains whatever you want
+	// e.g.
+	// var res_type 		= response.type;
+	// var command 		= response.command;
+	// var id 				= response.id;
+
+}
+
+function socketClosed(evt){		console.log("Socket Closed");}
+function socketError(evt){		console.log("Socket Error"); }
+
+
+window.addEventListener("load", function() {
+	console.log("Starting");
+	screate(receiveMessage, socketClosed, socketError);
+});
+
+function uuidv4() {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+		return v.toString(16);
+	});
+}		
+		</script>
+
+</head>
+
+<body>
+<h1>Hello</h1>
+</body>
+</html>

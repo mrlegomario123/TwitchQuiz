@@ -1,0 +1,8 @@
+/data/
+/.buildpath
+/.project
+/.eslintrc.js
+/.settings/
+/.htaccess
+/resources/xml/
+index.html

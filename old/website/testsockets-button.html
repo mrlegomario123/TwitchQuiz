@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+		<meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <script src="redom.min.js"></script>
+<!--                <script src="https://redom.js.org/redom.min.js"></script> -->
+		<script>
+			
+const { el, mount } = redom;
+
+
+
+var websocket;
+//var server_uri = "192.168.0.80";
+
+// Run on the same machine
+var server_uri = "localhost"; //look on this device
+//var server_uri = "home.twitchchat.com"; //look on this device
+var myid = uuidv4(); //create local id
+
+//socket create, called at start
+function screate(onopenfnc, onclosefnc, onreceivefnc) {
+
+	//uri of the websocket server on local host
+	//different to uri of website
+	//can have multiple websites accesing same websocket server
+	//this websocket server is stored locally
+	//give it port 9006
+	//e.g http: 80, https: 443, (all reserved)
+	// websocket standard port: 9006
+	// having many different ports => same ip adress can have different functionaonallity depending on port it comes in 
+	var wsUri = "ws://" + server_uri + ":9006/";
+	
+	websocket = new WebSocket(wsUri);//creates websocket connection (javascript implementaion)
+	//websocket is protocal so different implementaions in different languages
+	//websocket is async -> non blocking, these are callbacks, want to run in background
+
+	//on event websocket open -> run function "onopenfnc()"
+	//event driven, so knows to call apropriate function 
+	websocket.onopen = function(evt) { onopenfnc(evt); }; 
+	websocket.onclose = function(evt) { onclosefnc(evt);  };
+	//important: onmessage function from api, when incoming data from websocket, call onreceivefnc(), pass evt data
+	websocket.onmessage = function(evt) { onreceivefnc(evt); };
+	websocket.onerror = function(evt) { console.log('websocket error'); };
+
+}
+
+
+/**
+ * Send a message over web sockets
+ * 
+ * @param id        use this to identify an incoming message
+ * @param command   A command
+ * @param payload   Extra Payload in JSON
+ */
+
+ //send message function pass unique id plus what ever data you want
+ // pass in json format
+function sendMessage(id, command, payload ){
+
+	//prepare json data
+	var msg = {
+		xid : myid,
+		id : id,
+		command: command,
+		payload : payload
+	};
+
+	jmsg = JSON.stringify(msg); //convert to json (string that can be passed over)
+	console.log("Sending message to websocket : " + jmsg);
+	websocket.send(jmsg);//send that json message
+}
+
+// Receive message function w parameter ev (data comming in from websocket)
+
+function receiveMessage(ev) {
+
+	var response 		= JSON.parse(ev.data); //gets data back out
+	console.log("Received message from websocket : " + ev.data); //currently do nothing w data
+	//can however e.g. use javascript to inject new html content e.g. new list item
+
+	// Response is an object that contains whatever you want
+	// e.g.
+	// var res_type 		= response.type;
+	// var command 		= response.command;
+	// var id 				= response.id;
+
+}
+
+function socketClosed(evt){		console.log("Socket Closed");} 
+function socketError(evt){		console.log("Socket Error"); }
+
+//javascript window.addEventListener("load", function() -> waits untill entire webpage loaded in
+//	*if you try run javascript before everything loaded in, can cause issues
+//	*e.g. if try call javascript function from other file not loaded in -> issues 
+//	*run function {} code in curely brackets -> run screate function (config websocket)
+window.addEventListener("load", function() {
+	console.log("Starting");
+	
+const hello = el("h1", "Hello world!");
+
+mount(document.body, hello);
+
+	
+	screate(receiveMessage, socketClosed, socketError);
+});
+
+//create unique id
+function uuidv4() {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+		return v.toString(16);
+	});
+}		
+		</script>
+
+</head>
+
+<body>
+<h1>Hello</h1>
+<p>
+	<input type="text" id="fred" size="20" /> 
+	<button onclick="sendMessage('1','2',document.getElementById('fred').value)">send data</button>
+
+</p>
+</body>
+</html>
